@@ -57,20 +57,18 @@ build:
 python_install:
 	$(PYTHON) -m pip install . --verbose
 python_wheel:
-	$(PYTHON) -m pip wheel . -w build --verbose
+	$(PYTHON) -m pip wheel . -w dist --verbose
+python_build: python_wheel
 python_sdist:
 	$(PYTHON) -m pip sdist . --verbose
 python_test: pytest
 .PHONY: build
 
-# conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8
 # conda create -y -n py39 python=3.9
 # conda create -y -n py310 python=3.10
 # conda env list
-python_build_py36:
-	PYTHON=python conda run --no-capture-output -n py36 make python_build
 python_build_py37:
 	PYTHON=python conda run --no-capture-output -n py37 make python_build
 python_build_py38:
@@ -79,7 +77,7 @@ python_build_py39:
 	PYTHON=python conda run --no-capture-output -n py39 make python_build
 python_build_py310:
 	PYTHON=python conda run --no-capture-output -n py310 make python_build
-python_build_all: python_build_py36 python_build_py37 python_build_py38 python_build_py39 python_build_py310
+python_build_all: python_build_py37 python_build_py38 python_build_py39 python_build_py310
 python_build_all_in_linux:
 	docker run --rm -w `pwd` -v `pwd`:`pwd` -v `pwd`/build/linux:`pwd`/build -it $(DOCKER_TAG_LINUX) make python_build_all
 	make repair_wheels && rm -rf dist/*.whl && mv wheelhouse/*.whl dist && rm -rf wheelhouse
@@ -94,7 +92,7 @@ repair_wheels:
 pypi_remote ?= pypi
 upload_wheels:
 	python -m pip install twine
-	twine upload dist/*.whl -r $(pypi_remote)
+	twine upload dist/fast_viterbi-*.whl -r $(pypi_remote)
 
 tar.gz:
 	tar -cvz --exclude .git -f ../$(PROJECT_NAME).tar.gz .
