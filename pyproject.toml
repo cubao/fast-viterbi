@@ -4,9 +4,9 @@ build-backend = "scikit_build_core.build"
 
 
 [project]
-name = "scikit_build_example"
+name = "fast_viterbi"
 version = "0.0.1"
-description="A minimal example package (with pybind11)"
+description="a viterbi algo collection"
 readme = "README.md"
 authors = [
   { name = "My Name", email = "me@email.com" },
