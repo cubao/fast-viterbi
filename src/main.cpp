@@ -3,9 +3,7 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-int add(int i, int j) {
-    return i + j;
-}
+int add(int i, int j) { return i + j; }
 
 namespace py = pybind11;
 
@@ -29,7 +27,8 @@ PYBIND11_MODULE(_core, m) {
         Some other explanation about the add function.
     )pbdoc");
 
-    m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
+    m.def(
+        "subtract", [](int i, int j) { return i - j; }, R"pbdoc(
         Subtract two numbers
 
         Some other explanation about the subtract function.
