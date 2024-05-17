@@ -17,7 +17,7 @@ struct FastViterbi {
     using LayerIndex = int;
     using CandidateIndex = int;
     using NodeIndex = std::tuple<LayerIndex, CandidateIndex>;
-    FastViterbi(int K, int N, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &scores) {
+    FastViterbi(int K, int N, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &scores) : K_(K), N_(N) {
         if (K == 0 || N < 2) {
             return;
         }
@@ -46,10 +46,36 @@ struct FastViterbi {
         }
     }
 
+    std::vector<int> inference() const { return {}; }
+
+    bool setup_roads(const std::vector<std::vector<int64_t>> &roads) {
+        if (roads.size() != N_) {
+            roads_.clear();
+            return false;
+        }
+        roads_ = std::vector<std::vector<int64_t>>(N_, std::vector<int64_t>(K_, (int64_t)-1));
+        for (int n = 0; n < N_; ++n) {
+            int K = roads[n].size();
+            if (K > K_) {
+                roads_.clear();
+                return false;
+            }
+            for (int k = 0; k < K; ++k) {
+                roads_[n][k] = roads[n][k];
+            }
+        }
+        return true;
+    }
+
+    std::vector<int> inference(const std::vector<int> &path) const { return {}; }
+
   private:
+    const int K_{-1};
+    const int N_{-1};
     using Links = std::vector<std::pair<int, double>>;
     Links heads_;
     std::vector<std::vector<Links>> links_;
+    std::vector<std::vector<int64_t>> roads_;
 };
 }  // namespace cubao
 
