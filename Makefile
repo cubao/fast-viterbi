@@ -85,7 +85,7 @@ python_build_all_in_macos: python_build_py38 python_build_py39 python_build_py31
 python_build_all_in_windows: python_build_all
 
 repair_wheels:
-	python -m pip install auditwheel # sudo apt install patchelf
+	python -m pip install auditwheel # sudo apt install patchelf, conda install -c conda-forge patchelf
 	ls dist/*-linux_x86_64.whl | xargs -n1 auditwheel repair --plat manylinux2014_x86_64
 	rm -rf dist/*-linux_x86_64.whl && cp wheelhouse/*.whl dist && rm -rf wheelhouse
 
