@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
+
+#include <limits>
+#include <map>
 #include <vector>
-#include <unordered_map>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -15,13 +17,12 @@ struct FastViterbi {
     using LayerIndex = int;
     using CandidateIndex = int;
     using NodeIndex = std::tuple<LayerIndex, CandidateIndex>;
-    FastViterbi(int K, int N, const std::unordered_map<std::tuple<NodeIndex, NodeIndex>, double> &scores) {
+    FastViterbi(int K, int N, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &scores) {
         if (K == 0 || N < 2) {
             return;
         }
-        heads_ = std::vector<double>(K, neg_inf);
         links_ = std::vector<std::vector<Links>>(N - 1, std::vector<Links>(K));
-        for (auto &pair: scores) {
+        for (auto &pair : scores) {
             auto &curr = std::get<0>(pair.first);
             auto &next = std::get<1>(pair.first);
             auto lidx0 = std::get<0>(curr);
@@ -31,21 +32,26 @@ struct FastViterbi {
             double score = pair.second;
             if (lidx0 < 0) {
                 if (lidx1 == 0 && cidx1 < K) {
-                    heads_[cidx1] = score;
+                    heads_.push_back({cidx1, score});
                 }
                 continue;
             }
-            if (lidx0 < N && cidx0 < K && lidx1 == lidx0 + 1 && lidx1 < N && cidx1 < K) {
-                links[lidx0][cidx0].push_back({cidx1, score});
+            if (lidx0 >= N || lidx1 != lidx0 + 1 || lidx1 >= N) {
+                continue;
             }
+            if (cidx0 < 0 || cidx0 >= K || cidx1 < 0 || cidx1 >= K) {
+                continue;
+            }
+            links_[lidx0][cidx0].push_back({cidx1, score});
         }
     }
-    private:
-        using Links = std::vector<std::pair<int, double>>;
-        std::vector<double> heads_;
-        std::vector<std::vector<Links>> links_;
+
+  private:
+    using Links = std::vector<std::pair<int, double>>;
+    Links heads_;
+    std::vector<std::vector<Links>> links_;
 };
-}
+}  // namespace cubao
 
 PYBIND11_MODULE(_core, m) {
     m.doc() = R"pbdoc(
