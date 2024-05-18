@@ -13,13 +13,10 @@ int add(int i, int j) { return i + j; }
 
 namespace py = pybind11;
 
-namespace cubao {
-
-// https://github.com/isl-org/Open3D/blob/88693971ae7a7c3df27546ff7c5b1d91188e39cf/cpp/open3d/utility/Helper.h#L71
 template <typename T>
 struct hash_vector {
     std::size_t operator()(const std::vector<T> &vec) const {
-        size_t hash_seed = 0;
+        size_t hash_seed = std::hash<size_t>()(vec.size());
         for (auto elem : vec) {
             hash_seed ^= std::hash<T>()(elem) + 0x9e3779b9 + (hash_seed << 6) + (hash_seed >> 2);
         }
@@ -27,6 +24,34 @@ struct hash_vector {
     }
 };
 
+struct Seq {
+    const std::vector<int> node_path;
+    const std::vector<int64_t> road_path;
+    Seq() = default;
+    Seq(std::vector<int> &&node_path, std::vector<int64_t> &&road_path)
+        : node_path(std::move(node_path)), road_path(std::move(road_path)) {}
+
+    Seq patch(const std::vector<int> &more_nodes, const std::vector<int64_t> &more_roads) const {
+        auto nodes = node_path;
+        nodes.reserve(nodes.size() + more_nodes.size());
+        nodes.insert(nodes.end(), more_nodes.begin(), more_nodes.end());
+        auto roads = road_path;
+        roads.reserve(roads.size() + more_roads.size());
+        roads.insert(roads.end(), more_roads.begin(), more_roads.end());
+        return Seq(std::move(nodes), std::move(roads));
+    }
+};
+
+namespace std {
+template <>
+struct hash<Seq> {
+    size_t operator()(const Seq &s) const noexcept { return hash_vector(s.node_path); }
+};
+}  // namespace std
+
+namespace cubao {
+
+// https://github.com/isl-org/Open3D/blob/88693971ae7a7c3df27546ff7c5b1d91188e39cf/cpp/open3d/utility/Helper.h#L71
 constexpr double neg_inf = -std::numeric_limits<double>::infinity();
 struct FastViterbi {
     using LayerIndex = int;
@@ -102,8 +127,7 @@ struct FastViterbi {
         return true;
     }
 
-    bool setup_shortest_road_paths(
-        const std::map<std::tuple<NodeIndex, NodeIndex>, std::vector<int64_t>> &sp_paths) {
+    bool setup_shortest_road_paths(const std::map<std::tuple<NodeIndex, NodeIndex>, std::vector<int64_t>> &sp_paths) {
         if (roads_.empty()) {
             return false;
         }
@@ -170,7 +194,12 @@ struct FastViterbi {
         return path;
     }
 
-    std::vector<int> inference(const std::vector<int64_t> &road_path) const {}
+    std::vector<int> inference(const std::vector<int64_t> &road_path) const {
+        if (roads_.empty() || sp_paths_.empty()) {
+            return {};
+        }
+        return {};
+    }
 
   private:
     const int K_{-1};
