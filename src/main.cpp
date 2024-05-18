@@ -61,10 +61,26 @@ struct hash<Seq> {
 };
 }  // namespace std
 
+inline bool __equals(const std::vector<int64_t> &seq0, int i0, int j0, const std::vector<int64_t> &seq1, int i1,
+                     int j1) {
+    if (j0 - i0 != j1 - i1) {
+        return false;
+    }
+    while (i0 < j0) {
+        if (seq0[i0] != seq1[i1]) {
+            return false;
+        }
+        ++i0;
+        ++i1;
+    }
+    return true;
+}
+
 namespace cubao {
 
 // https://github.com/isl-org/Open3D/blob/88693971ae7a7c3df27546ff7c5b1d91188e39cf/cpp/open3d/utility/Helper.h#L71
 constexpr double neg_inf = -std::numeric_limits<double>::infinity();
+constexpr double pos_inf = std::numeric_limits<double>::infinity();
 struct FastViterbi {
     using LayerIndex = int;
     using CandidateIndex = int;
@@ -115,13 +131,15 @@ struct FastViterbi {
         return ret;
     }
 
-    std::vector<int> inference() const {
+    std::pair<double, std::vector<int>> inference() const {
         // forward
         // backward
+        return {pos_inf, {}};
     }
 
     bool setup_roads(const std::vector<std::vector<int64_t>> &roads) {
         if (roads.size() != N_) {
+            std::cerr << "invalid roads, #layers=" << roads.size() << " != " << N_ << std::endl;
             return false;
         }
         roads_ = std::vector<std::vector<int64_t>>(N_, std::vector<int64_t>(K_, (int64_t)-1));
@@ -141,6 +159,7 @@ struct FastViterbi {
 
     bool setup_shortest_road_paths(const std::map<std::tuple<NodeIndex, NodeIndex>, std::vector<int64_t>> &sp_paths) {
         if (roads_.empty()) {
+            std::cerr << "roads not setup" << std::endl;
             return false;
         }
         for (auto &pair : sp_paths) {
@@ -175,6 +194,7 @@ struct FastViterbi {
                 continue;
             }
             if (path.front() == roads_[lidx0][cidx0] && path.back() == roads_[lidx1][cidx1]) {
+                // scores_.at(lidx0).at(cidx0).at(cidx1)
                 sp_paths_[lidx0][cidx0][cidx1] = path;
             } else {
                 std::cerr << "sp_path not match roads" << std::endl;
@@ -206,12 +226,12 @@ struct FastViterbi {
         return path;
     }
 
-    std::vector<int> inference(const std::vector<int64_t> &road_path) const {
+    std::pair<double, std::vector<int>> inference(const std::vector<int64_t> &road_path) const {
         if (roads_.empty() || sp_paths_.empty()) {
-            return {};
+            return {pos_inf, {}};
         }
         if (road_path.empty()) {
-            return {};
+            return {pos_inf, {}};
         }
         std::vector<std::unordered_set<Seq>> prev_paths(K_);
         for (auto &pair : heads_) {
@@ -220,13 +240,37 @@ struct FastViterbi {
             if (rid != road_path[0]) {
                 continue;
             }
-            prev_paths_[nid].insert(Seq({nid, rid}));
+            prev_paths_[nid].insert(Seq({nid}, {rid}));
         }
+        const int N = road_path.size();
         for (int n = 0; n < N_ - 1; ++n) {
+            auto &paths = sp_paths_.at(n);
             std::vector<std::unordered_set<Seq>> curr_paths(K_);
             auto &layer = links_[n];
-            for (int k = 0; k < K_; ++i) {
+            for (int k = 0; k < K_; ++k) {
+                const auto &heads = prev_paths[k];
+                if (heads.empty() || layer[k].empty()) {
+                    continue;
+                }
+                auto &p = path.at(i);
                 for (auto &pair : layer[k]) {
+                    int j = pair.first;
+                    const auto &sig = p.at(j);
+                    if (sig.size() == 1) {
+                        for (auto &seq : heads) {
+                            curr_paths[j].insert(seq.patch({j}, {}));
+                        }
+                        continue;
+                    }
+                    for (auto &seq : heads) {
+                        auto &path = seq.road_path;
+                        int I = path.size();
+                        int J = I + sig.size() - 1;
+                        if (!__equals(sig, 1, sig.size(), road_path, I, J)) {
+                            continue;
+                        }
+                        curr_paths[j].insert(seq.patch({j}, std::vector<int64_t>(sig.begin() + 1, sig.end())));
+                    }
                 }
             }
             prev_paths = std::move(curr_paths);
@@ -235,12 +279,26 @@ struct FastViterbi {
         std::vector<Seq> all_paths;
         for (auto &paths : prev_paths) {
             for (auto &path : paths) {
+                if (path.road_path.size() != N) {
+                    continue;
+                }
                 all_paths.push_back(std::move(path));
             }
         }
-        // find best path
+        if (all_paths.empty()) {
+            return {pos_inf, {}};
+        }
 
-        return {};
+        double max_score = neg_inf;
+        int best_path = -1;
+        for (int i = 0; i < all_paths.size(); ++i) {
+            double score = calc_score(all_paths[i]);
+            if (score > max_score) {
+                max_score = score;
+                best_path = i;
+            }
+        }
+        return {pos_inf, {}};
     }
 
   private:
@@ -258,6 +316,8 @@ struct FastViterbi {
     std::vector<std::vector<int64_t>> roads_;
     // sp_paths, lidx -> cidx -> next_cidx -> sp_path (road seq)
     std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<int64_t>>>> sp_paths_;
+
+    double calc_score(const Seq &seq) const { return 0.0; }
 };
 }  // namespace cubao
 
