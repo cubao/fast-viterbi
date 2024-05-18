@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "fast_viterbi"
-version = "0.0.1"
+version = "0.0.2"
 description="a viterbi algo collection"
 readme = "README.md"
 authors = [
