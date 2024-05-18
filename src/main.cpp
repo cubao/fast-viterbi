@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ankerl/unordered_dense.h"
+
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
@@ -84,6 +86,11 @@ namespace cubao {
 // https://github.com/isl-org/Open3D/blob/88693971ae7a7c3df27546ff7c5b1d91188e39cf/cpp/open3d/utility/Helper.h#L71
 constexpr double neg_inf = -std::numeric_limits<double>::infinity();
 constexpr double pos_inf = std::numeric_limits<double>::infinity();
+
+template <typename Key, typename Value, typename Hash = ankerl::unordered_dense::hash<Key>,
+          typename Equal = std::equal_to<Key>>
+using unordered_map = ankerl::unordered_dense::map<Key, Value, Hash, Equal>;
+
 struct FastViterbi {
     using LayerIndex = int;
     using CandidateIndex = int;
@@ -297,12 +304,12 @@ struct FastViterbi {
     // tail layers, [[cidx (in next layer), score]]
     std::vector<std::vector<Links>> links_;
     // score map, lidx -> cidx -> next_cidx -> score
-    std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, double>>> scores_;
+    unordered_map<int, unordered_map<int, unordered_map<int, double>>> scores_;
 
     // road ids, K * N
     std::vector<std::vector<int64_t>> roads_;
     // sp_paths, lidx -> cidx -> next_cidx -> sp_path (road seq)
-    std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<int64_t>>>> sp_paths_;
+    unordered_map<int, unordered_map<int, unordered_map<int, std::vector<int64_t>>>> sp_paths_;
 
     double calc_score(const Seq &seq) const {
         auto &nodes = seq.node_path;
