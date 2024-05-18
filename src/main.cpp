@@ -1,4 +1,6 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include <iostream>
 #include <limits>
@@ -12,6 +14,7 @@
 int add(int i, int j) { return i + j; }
 
 namespace py = pybind11;
+using namespace pybind11::literals;
 
 template <typename T>
 struct hash_vector {
@@ -342,8 +345,11 @@ PYBIND11_MODULE(_core, m) {
         Some other explanation about the subtract function.
     )pbdoc");
 
-    py::class_<FastViterbi>(m, "FastViterbi", py::module_local(), py::dynamic_attr())  //
-        .def(py::init<int, int, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &>, "K"_a, "N"_a, "scores"_a)
+    using FastViterbi = cubao::FastViterbi;
+    using NodeIndex = FastViterbi::NodeIndex;
+    py::class_<FastViterbi>(m, "FastViterbi", py::module_local(), py::dynamic_attr())           //
+        .def(py::init<int, int, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &>(),  //
+             "K"_a, "N"_a, "scores"_a)
         //
         .def("scores", &FastViterbi::scores, "node_path")
         //
