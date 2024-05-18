@@ -31,6 +31,18 @@ struct Seq {
     Seq(std::vector<int> &&node_path, std::vector<int64_t> &&road_path)
         : node_path(std::move(node_path)), road_path(std::move(road_path)) {}
 
+    bool operator==(const Seq &other) const {
+        if (node_path.size() != other.node_path.size()) {
+            return false;
+        }
+        for (int i = 0; i < node_path.size(); ++i) {
+            if (node_path[i] != other.node_path[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     Seq patch(const std::vector<int> &more_nodes, const std::vector<int64_t> &more_roads) const {
         auto nodes = node_path;
         nodes.reserve(nodes.size() + more_nodes.size());
@@ -198,6 +210,36 @@ struct FastViterbi {
         if (roads_.empty() || sp_paths_.empty()) {
             return {};
         }
+        if (road_path.empty()) {
+            return {};
+        }
+        std::vector<std::unordered_set<Seq>> prev_paths(K_);
+        for (auto &pair : heads_) {
+            auto nid = pair.first;
+            auto rid = roads_[0][nid];
+            if (rid != road_path[0]) {
+                continue;
+            }
+            prev_paths_[nid].insert(Seq({nid, rid}));
+        }
+        for (int n = 0; n < N_ - 1; ++n) {
+            std::vector<std::unordered_set<Seq>> curr_paths(K_);
+            auto &layer = links_[n];
+            for (int k = 0; k < K_; ++i) {
+                for (auto &pair : layer[k]) {
+                }
+            }
+            prev_paths = std::move(curr_paths);
+        }
+
+        std::vector<Seq> all_paths;
+        for (auto &paths : prev_paths) {
+            for (auto &path : paths) {
+                all_paths.push_back(std::move(path));
+            }
+        }
+        // find best path
+
         return {};
     }
 
