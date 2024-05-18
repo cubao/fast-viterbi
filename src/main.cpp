@@ -131,7 +131,7 @@ struct FastViterbi {
         return ret;
     }
 
-    std::pair<double, std::vector<int>> inference() const {
+    std::tuple<double, std::vector<int>> inference() const {
         // forward
         // backward
         return {pos_inf, {}};
@@ -226,12 +226,12 @@ struct FastViterbi {
         return path;
     }
 
-    std::pair<double, std::vector<int>> inference(const std::vector<int64_t> &road_path) const {
+    std::tuple<double, std::vector<int>, std::vector<int64_t>> inference(const std::vector<int64_t> &road_path) const {
         if (roads_.empty() || sp_paths_.empty()) {
-            return {pos_inf, {}};
+            return {pos_inf, {}, {}};
         }
         if (road_path.empty()) {
-            return {pos_inf, {}};
+            return {pos_inf, {}, {}};
         }
         std::vector<std::unordered_set<Seq>> prev_paths(K_);
         for (auto &pair : heads_) {
@@ -286,7 +286,7 @@ struct FastViterbi {
             }
         }
         if (all_paths.empty()) {
-            return {pos_inf, {}};
+            return {pos_inf, {}, {}};
         }
 
         double max_score = neg_inf;
@@ -299,9 +299,9 @@ struct FastViterbi {
             }
         }
         if (best_path < 0) {
-            return {pos_inf, {}};
+            return {pos_inf, {}, {}};
         }
-        return {max_score, all_paths[best_path]};
+        return {max_score, all_paths[best_path].node_path, all_paths[best_path].road_path};
     }
 
   private:
