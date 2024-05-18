@@ -361,7 +361,8 @@ PYBIND11_MODULE(_core, m) {
         .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a)
         //
         .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
-             "road_path"_a)
+             "road_path"_a, py::call_guard<py::gil_scoped_release>())
+
         //
         ;
 
