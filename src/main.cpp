@@ -15,10 +15,10 @@ namespace py = pybind11;
 
 template <typename T>
 struct hash_vector {
-    std::size_t operator()(const std::vector<T> &vec) const {
+    std::size_t operator()(const T &vec) const {
         size_t hash_seed = std::hash<size_t>()(vec.size());
         for (auto elem : vec) {
-            hash_seed ^= std::hash<T>()(elem) + 0x9e3779b9 + (hash_seed << 6) + (hash_seed >> 2);
+            hash_seed ^= std::hash<typename T::value_type>()(elem) + 0x9e3779b9 + (hash_seed << 6) + (hash_seed >> 2);
         }
         return hash_seed;
     }
@@ -45,7 +45,7 @@ struct Seq {
 namespace std {
 template <>
 struct hash<Seq> {
-    size_t operator()(const Seq &s) const noexcept { return hash_vector(s.node_path); }
+    size_t operator()(const Seq &s) const noexcept { return hash_vector<decltype(s.node_path)>()(s.node_path); }
 };
 }  // namespace std
 
