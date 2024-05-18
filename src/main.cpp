@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -13,6 +14,21 @@ int add(int i, int j) { return i + j; }
 namespace py = pybind11;
 
 namespace cubao {
+
+// https://github.com/isl-org/Open3D/blob/88693971ae7a7c3df27546ff7c5b1d91188e39cf/cpp/open3d/utility/Helper.h#L71
+template <typename T>
+struct hash_vector {
+    std::size_t operator()(const std::vector<T> &vec) const {
+        size_t hash_seed = 0;
+        for (auto elem: vec) {
+            hash_seed ^= std::hash<T>()(elem) + 0x9e3779b9 +
+                (hash_seed << 6) + (hash_seed >> 2);
+        }
+        return hash_seed;
+    }
+};
+
+
 constexpr double neg_inf = -std::numeric_limits<double>::infinity();
 struct FastViterbi {
     using LayerIndex = int;
@@ -71,7 +87,6 @@ struct FastViterbi {
 
     bool setup_roads(const std::vector<std::vector<int64_t>> &roads) {
         if (roads.size() != N_) {
-            roads_.clear();
             return false;
         }
         roads_ = std::vector<std::vector<int64_t>>(N_, std::vector<int64_t>(K_, (int64_t)-1));
