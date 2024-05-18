@@ -137,7 +137,7 @@ struct FastViterbi {
     std::tuple<double, std::vector<int>> inference() const {
         // forward
         // backward
-        return std::make_tuple<double, std::vector<int>>(pos_inf, {});
+        return std::make_tuple(pos_inf, std::vector<int>{});
     }
 
     bool setup_roads(const std::vector<std::vector<int64_t>> &roads) {
@@ -210,10 +210,10 @@ struct FastViterbi {
 
     std::tuple<double, std::vector<int>, std::vector<int64_t>> inference(const std::vector<int64_t> &road_path) const {
         if (roads_.empty() || sp_paths_.empty()) {
-            return std::make_tuple<double, std::vector<int>, std::vector<int64_t>>(pos_inf, {}, {});
+            return std::make_tuple(pos_inf, std::vector<int>{}, std::vector<int64_t>{});
         }
         if (road_path.empty()) {
-            return std::make_tuple<double, std::vector<int>, std::vector<int64_t>>(pos_inf, {}, {});
+            return std::make_tuple(pos_inf, std::vector<int>{}, std::vector<int64_t>{});
         }
         std::vector<std::unordered_set<Seq>> prev_paths(K_);
         for (auto &pair : heads_) {
@@ -268,7 +268,7 @@ struct FastViterbi {
             }
         }
         if (all_paths.empty()) {
-            return std::make_tuple<double, std::vector<int>, std::vector<int64_t>>(pos_inf, {}, {});
+            return std::make_tuple(pos_inf, std::vector<int>{}, std::vector<int64_t>{});
         }
 
         double max_score = neg_inf;
@@ -281,11 +281,11 @@ struct FastViterbi {
             }
         }
         if (best_path < 0) {
-            return std::make_tuple<double, std::vector<int>, std::vector<int64_t>>(pos_inf, {}, {});
+            return std::make_tuple(pos_inf, std::vector<int>{}, std::vector<int64_t>{});
         }
-        return std::make_tuple<double, std::vector<int>, std::vector<int64_t>>(max_score,                       //
-                                                                               all_paths[best_path].node_path,  //
-                                                                               all_paths[best_path].road_path);
+        return std::make_tuple(max_score,                       //
+                               all_paths[best_path].node_path,  //
+                               all_paths[best_path].road_path);
     }
 
   private:
