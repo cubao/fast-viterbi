@@ -1,10 +1,10 @@
 #include <pybind11/pybind11.h>
 
+#include <iostream>
 #include <limits>
 #include <map>
-#include <vector>
 #include <unordered_map>
-#include <iostream>
+#include <vector>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -20,14 +20,12 @@ template <typename T>
 struct hash_vector {
     std::size_t operator()(const std::vector<T> &vec) const {
         size_t hash_seed = 0;
-        for (auto elem: vec) {
-            hash_seed ^= std::hash<T>()(elem) + 0x9e3779b9 +
-                (hash_seed << 6) + (hash_seed >> 2);
+        for (auto elem : vec) {
+            hash_seed ^= std::hash<T>()(elem) + 0x9e3779b9 + (hash_seed << 6) + (hash_seed >> 2);
         }
         return hash_seed;
     }
 };
-
 
 constexpr double neg_inf = -std::numeric_limits<double>::infinity();
 struct FastViterbi {
@@ -74,7 +72,7 @@ struct FastViterbi {
         double acc = scores_.at(-1).at(-1).at(node_path[0]);
         ret.push_back(acc);
         for (int n = 0; n < N_ - 1; ++n) {
-            acc += scores_.at(n).at(node_path[n]).at(node_path[n+1]);
+            acc += scores_.at(n).at(node_path[n]).at(node_path[n + 1]);
             ret.push_back(acc);
         }
         return ret;
@@ -104,6 +102,53 @@ struct FastViterbi {
         return true;
     }
 
+    bool setup_shortest_road_paths(
+        const std::map<std::tuple<NodeIndex, NodeIndex>, std::vector<int64_t>> &sp_paths) {
+        if (roads_.empty()) {
+            return false;
+        }
+        for (auto &pair : sp_paths) {
+            auto &curr = std::get<0>(pair.first);
+            auto &next = std::get<1>(pair.first);
+            auto lidx0 = std::get<0>(curr);
+            auto cidx0 = std::get<1>(curr);
+            auto lidx1 = std::get<0>(next);
+            auto cidx1 = std::get<1>(next);
+            auto &path = pair.second;
+            if (path.empty()) {
+                std::cerr << "empty path" << std::endl;
+                sp_paths_.clear();
+                return false;
+            }
+            if (lidx0 < 0) {
+                if (lidx1 == 0 && cidx1 < K_) {
+                    if (path.size() == 1 && path[0] == roads_[0][cidx1]) {
+                        sp_paths_[-1][-1][cidx1] = path;
+                    } else {
+                        std::cerr << "sp_path not match roads" << std::endl;
+                        sp_paths_.clear();
+                        return false;
+                    }
+                }
+                continue;
+            }
+            if (lidx0 >= N_ || lidx1 != lidx0 + 1 || lidx1 >= N_) {
+                continue;
+            }
+            if (cidx0 < 0 || cidx0 >= K_ || cidx1 < 0 || cidx1 >= K_) {
+                continue;
+            }
+            if (path.front() == roads_[lidx0][cidx0] && path.back() == roads_[lidx1][cidx1]) {
+                sp_paths_[lidx0][cidx0][cidx1] = path;
+            } else {
+                std::cerr << "sp_path not match roads" << std::endl;
+                sp_paths_.clear();
+                return false;
+            }
+        }
+        return true;
+    }
+
     std::vector<int64_t> road_path(const std::vector<int> &node_path) const {
         if (node_path.empty()) {
             std::cerr << "empty node path!" << std::endl;
@@ -125,7 +170,7 @@ struct FastViterbi {
         return path;
     }
 
-    std::vector<int> inference(const std::vector<int> &path) const { return {}; }
+    std::vector<int> inference(const std::vector<int64_t> &road_path) const {}
 
   private:
     const int K_{-1};
@@ -135,10 +180,13 @@ struct FastViterbi {
     Links heads_;
     // tail layers, [[cidx (in next layer), score]]
     std::vector<std::vector<Links>> links_;
-    // road ids, K * N
-    std::vector<std::vector<int64_t>> roads_;
     // score map, lidx -> cidx -> next_cidx -> score
     std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, double>>> scores_;
+
+    // road ids, K * N
+    std::vector<std::vector<int64_t>> roads_;
+    // sp_paths, lidx -> cidx -> next_cidx -> sp_path (road seq)
+    std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<int64_t>>>> sp_paths_;
 };
 }  // namespace cubao
 
