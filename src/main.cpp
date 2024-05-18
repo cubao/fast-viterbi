@@ -205,27 +205,6 @@ struct FastViterbi {
         return true;
     }
 
-    std::vector<int64_t> road_path(const std::vector<int> &node_path) const {
-        if (node_path.empty()) {
-            std::cerr << "empty node path!" << std::endl;
-            return {};
-        }
-        if (roads_.empty()) {
-            std::cerr << "roads not inited!" << std::endl;
-            return {};
-        }
-        std::vector<int64_t> path;
-        path.push_back(roads_[0][node_path[0]]);
-        for (int n = 1; n < node_path.size(); ++n) {
-            auto r = roads_[0][node_path[0]];
-            if (r == path.back()) {
-                continue;
-            }
-            path.push_back(r);
-        }
-        return path;
-    }
-
     std::tuple<double, std::vector<int>, std::vector<int64_t>> inference(const std::vector<int64_t> &road_path) const {
         if (roads_.empty() || sp_paths_.empty()) {
             return {pos_inf, {}, {}};
@@ -362,6 +341,21 @@ PYBIND11_MODULE(_core, m) {
 
         Some other explanation about the subtract function.
     )pbdoc");
+
+    py::class_<FastViterbi>(m, "FastViterbi", py::module_local(), py::dynamic_attr())  //
+        .def(py::init<int, int, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &>, "K"_a, "N"_a, "scores"_a)
+        //
+        .def("scores", &FastViterbi::scores, "node_path")
+        //
+        .def("inference", py::overload_cast<>(&FastViterbi::inference, py::const_))
+        //
+        .def("setup_roads", &FastViterbi::setup_roads, "roads"_a)
+        .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a)
+        //
+        .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
+             "road_path"_a)
+        //
+        ;
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
