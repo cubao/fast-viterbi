@@ -61,8 +61,8 @@ struct hash<Seq> {
 };
 }  // namespace std
 
-inline bool __equals(const std::vector<int64_t> &seq0, int i0, int j0, const std::vector<int64_t> &seq1, int i1,
-                     int j1) {
+inline bool __equals(const std::vector<int64_t> &seq0, int i0, int j0,  //
+                     const std::vector<int64_t> &seq1, int i1, int j1) {
     if (j0 - i0 != j1 - i1) {
         return false;
     }
@@ -240,20 +240,20 @@ struct FastViterbi {
             if (rid != road_path[0]) {
                 continue;
             }
-            prev_paths_[nid].insert(Seq({nid}, {rid}));
+            prev_paths[nid].insert(Seq({nid}, {rid}));
         }
         const int N = road_path.size();
         for (int n = 0; n < N_ - 1; ++n) {
-            auto &paths = sp_paths_.at(n);
             std::vector<std::unordered_set<Seq>> curr_paths(K_);
+            auto &paths = sp_paths_.at(n);
             auto &layer = links_[n];
-            for (int k = 0; k < K_; ++k) {
-                const auto &heads = prev_paths[k];
-                if (heads.empty() || layer[k].empty()) {
+            for (int i = 0; i < K_; ++i) {
+                const auto &heads = prev_paths[i];
+                if (heads.empty() || layer[i].empty()) {
                     continue;
                 }
-                auto &p = path.at(i);
-                for (auto &pair : layer[k]) {
+                auto &p = paths.at(i);
+                for (auto &pair : layer[i]) {
                     int j = pair.first;
                     const auto &sig = p.at(j);
                     if (sig.size() == 1) {
@@ -298,7 +298,10 @@ struct FastViterbi {
                 best_path = i;
             }
         }
-        return {pos_inf, {}};
+        if (best_path < 0) {
+            return {pos_inf, {}};
+        }
+        return {max_score, all_paths[best_path]};
     }
 
   private:
@@ -317,7 +320,19 @@ struct FastViterbi {
     // sp_paths, lidx -> cidx -> next_cidx -> sp_path (road seq)
     std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<int64_t>>>> sp_paths_;
 
-    double calc_score(const Seq &seq) const { return 0.0; }
+    double calc_score(const Seq &seq) const {
+        auto &nodes = seq.node_path;
+        if (nodes.empty()) {
+            return neg_inf;
+        }
+        double score = scores_.at(-1).at(-1).at(nodes[0]);
+        for (int n = 0; n < nodes.size() - 1; ++n) {
+            int i = nodes[n];
+            int j = nodes[n + 1];
+            score += scores_.at(n).at(i).at(j);
+        }
+        return score;
+    }
 };
 }  // namespace cubao
 
