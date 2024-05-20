@@ -57,6 +57,8 @@ struct Seq {
     }
 };
 
+using Roads = std::unordered_set<std::vector<int64_t>, hash_vector<std::vector<int64_t>>>;
+
 namespace std {
 template <>
 struct hash<Seq> {
@@ -213,7 +215,6 @@ struct FastViterbi {
         if (roads_.empty() || sp_paths_.empty()) {
             return {};
         }
-        using Roads = std::unordered_set<std::vector<int64_t>, hash_vector<std::vector<int64_t>>>;
         std::vector<Roads> prev_paths(K_);
         for (auto &pair : heads_) {
             auto cidx = pair.first;
@@ -234,9 +235,7 @@ struct FastViterbi {
                     int j = pair.first;
                     const auto &sig = p.at(j);
                     if (sig.size() == 1) {
-                        for (auto &seq : heads) {
-                            curr_paths[j].insert(heads.begin(), heads.end());
-                        }
+                        curr_paths[j].insert(heads.begin(), heads.end());
                         continue;
                     }
                     for (auto copy : heads) {
@@ -408,6 +407,7 @@ PYBIND11_MODULE(_core, m) {
         .def("setup_roads", &FastViterbi::setup_roads, "roads"_a)
         .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a)
         //
+        .def("all_road_paths", &FastViterbi::all_road_paths)
         .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
              "road_path"_a, py::call_guard<py::gil_scoped_release>())
 
