@@ -57,6 +57,8 @@ struct Seq {
     }
 };
 
+using Roads = std::unordered_set<std::vector<int64_t>, hash_vector<std::vector<int64_t>>>;
+
 namespace std {
 template <>
 struct hash<Seq> {
@@ -207,6 +209,50 @@ struct FastViterbi {
             }
         }
         return true;
+    }
+
+    std::vector<std::vector<int64_t>> all_road_paths() const {
+        if (roads_.empty() || sp_paths_.empty()) {
+            return {};
+        }
+        std::vector<Roads> prev_paths(K_);
+        for (auto &pair : heads_) {
+            auto cidx = pair.first;
+            auto nidx = roads_[0][cidx];
+            prev_paths[cidx].insert({nidx});
+        }
+        for (int n = 0; n < N_ - 1; ++n) {
+            std::vector<Roads> curr_paths(K_);
+            auto &paths = sp_paths_.at(n);
+            auto &layer = links_[n];
+            for (int i = 0; i < K_; ++i) {
+                const auto &heads = prev_paths[i];
+                if (heads.empty() || layer[i].empty()) {
+                    continue;
+                }
+                auto &p = paths.at(i);
+                for (auto &pair : layer[i]) {
+                    int j = pair.first;
+                    const auto &sig = p.at(j);
+                    if (sig.size() == 1) {
+                        curr_paths[j].insert(heads.begin(), heads.end());
+                        continue;
+                    }
+                    for (auto copy : heads) {
+                        copy.insert(copy.end(), sig.begin() + 1, sig.end());
+                        curr_paths[j].insert(std::move(copy));
+                    }
+                }
+            }
+            prev_paths = std::move(curr_paths);
+        }
+        Roads ret;
+        for (auto seqs : prev_paths) {
+            for (auto &seq : seqs) {
+                ret.insert(seq);
+            }
+        }
+        return {ret.begin(), ret.end()};
     }
 
     std::tuple<double, std::vector<int>, std::vector<int64_t>> inference(const std::vector<int64_t> &road_path) const {
@@ -361,6 +407,7 @@ PYBIND11_MODULE(_core, m) {
         .def("setup_roads", &FastViterbi::setup_roads, "roads"_a)
         .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a)
         //
+        .def("all_road_paths", &FastViterbi::all_road_paths)
         .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
              "road_path"_a, py::call_guard<py::gil_scoped_release>())
 
