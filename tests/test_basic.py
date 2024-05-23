@@ -4,7 +4,7 @@ import fast_viterbi as m
 
 
 def test_version():
-    assert m.__version__ == "0.1.0"
+    assert m.__version__ == "0.1.1"
 
 
 def test_add():
