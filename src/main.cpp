@@ -403,8 +403,8 @@ PYBIND11_MODULE(_core, m) {
              Initialize FastViterbi object.
 
              Args:
-                 K (int): Number of layers.
-                 N (int): Number of nodes per layer.
+                 K (int): Number of nodes per layer.
+                 N (int): Number of layers.
                  scores (dict): Scores for node transitions.
              )pbdoc")
         //
