@@ -398,19 +398,68 @@ PYBIND11_MODULE(_core, m) {
     using NodeIndex = FastViterbi::NodeIndex;
     py::class_<FastViterbi>(m, "FastViterbi", py::module_local(), py::dynamic_attr())           //
         .def(py::init<int, int, const std::map<std::tuple<NodeIndex, NodeIndex>, double> &>(),  //
-             "K"_a, "N"_a, "scores"_a)
-        //
-        .def("scores", &FastViterbi::scores, "node_path")
-        //
-        .def("inference", py::overload_cast<>(&FastViterbi::inference, py::const_))
-        //
-        .def("setup_roads", &FastViterbi::setup_roads, "roads"_a)
-        .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a)
-        //
-        .def("all_road_paths", &FastViterbi::all_road_paths)
-        .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
-             "road_path"_a, py::call_guard<py::gil_scoped_release>())
+             "K"_a, "N"_a, "scores"_a,
+             R"pbdoc(
+             Initialize FastViterbi object.
 
+             Args:
+                 K (int): Number of nodes per layer.
+                 N (int): Number of layers.
+                 scores (dict): Scores for node transitions.
+             )pbdoc")
+        //
+        .def("scores", &FastViterbi::scores, "node_path"_a,
+             R"pbdoc(
+             Get scores for a given node path.
+
+             Args:
+                 node_path (list): List of node indices representing a path.
+
+             Returns:
+                 float: Total score for the given path.
+             )pbdoc")
+        //
+        .def("inference", py::overload_cast<>(&FastViterbi::inference, py::const_),
+             R"pbdoc(
+             Perform inference without a road path.
+
+             Returns:
+                 tuple: Best path and its score.
+             )pbdoc")
+        //
+        .def("setup_roads", &FastViterbi::setup_roads, "roads"_a,
+             R"pbdoc(
+             Set up roads for the Viterbi algorithm.
+
+             Args:
+                 roads (list): List of road sequences.
+             )pbdoc")
+        .def("setup_shortest_road_paths", &FastViterbi::setup_shortest_road_paths, "sp_paths"_a,
+             R"pbdoc(
+             Set up shortest road paths.
+
+             Args:
+                 sp_paths (dict): Dictionary of shortest paths between nodes.
+             )pbdoc")
+        //
+        .def("all_road_paths", &FastViterbi::all_road_paths,
+             R"pbdoc(
+             Get all road paths.
+
+             Returns:
+                 list: All road paths in the graph.
+             )pbdoc")
+        .def("inference", py::overload_cast<const std::vector<int64_t> &>(&FastViterbi::inference, py::const_),
+             "road_path"_a, py::call_guard<py::gil_scoped_release>(),
+             R"pbdoc(
+             Perform inference with a given road path.
+
+             Args:
+                 road_path (list): List of road indices representing a path.
+
+             Returns:
+                 tuple: Best path and its score.
+             )pbdoc")
         //
         ;
 

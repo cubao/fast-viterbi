@@ -64,6 +64,10 @@ python_sdist:
 python_test: pytest
 .PHONY: build
 
+restub:
+	pybind11-stubgen fast_viterbi._core -o stubs
+	cp stubs/fast_viterbi/_core.pyi src/fast_viterbi
+
 # conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8
 # conda create -y -n py39 python=3.9
