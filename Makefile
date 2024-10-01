@@ -66,7 +66,7 @@ python_test: pytest
 
 restub:
 	pybind11-stubgen fast_viterbi._core -o stubs
-	# cp stubs/networkx_graph/_core.pyi src/networkx_graph
+	cp stubs/fast_viterbi/_core.pyi src/fast_viterbi
 
 # conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8
