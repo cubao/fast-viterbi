@@ -8,8 +8,7 @@ Pybind11 example plugin
 .. autosummary::
    :toctree: _generate
 
-   add
-   subtract
+   FastViterbi
 
 """
 
@@ -17,7 +16,7 @@ from __future__ import annotations
 
 import typing
 
-__all__: list[str] = ["FastViterbi", "add", "subtract"]
+__all__: list[str] = ["FastViterbi"]
 
 class FastViterbi:
     def __init__(
@@ -86,19 +85,5 @@ class FastViterbi:
         Args:
             sp_paths (dict): Dictionary of shortest paths between nodes.
         """
-
-def add(arg0: int, arg1: int) -> int:
-    """
-    Add two numbers
-
-    Some other explanation about the add function.
-    """
-
-def subtract(arg0: int, arg1: int) -> int:
-    """
-    Subtract two numbers
-
-    Some other explanation about the subtract function.
-    """
 
 __version__: str = "0.1.3"
