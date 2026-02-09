@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import typing
 
-__all__ = ["FastViterbi", "add", "subtract"]
+__all__: list[str] = ["FastViterbi", "add", "subtract"]
 
 class FastViterbi:
     def __init__(
@@ -101,4 +101,4 @@ def subtract(arg0: int, arg1: int) -> int:
     Some other explanation about the subtract function.
     """
 
-__version__: str = "0.1.2"
+__version__: str = "0.1.3"

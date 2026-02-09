@@ -1,3 +1,3 @@
 # fast viterbi
 
-TODO
+[如何通俗地讲解 viterbi 算法？](https://www.zhihu.com/question/20136144/answer/763021768)
