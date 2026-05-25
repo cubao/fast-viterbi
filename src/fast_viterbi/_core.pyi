@@ -86,4 +86,4 @@ class FastViterbi:
             sp_paths (dict): Dictionary of shortest paths between nodes.
         """
 
-__version__: str = "0.1.3"
+__version__: str = "0.1.4"
